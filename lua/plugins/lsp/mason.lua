@@ -28,7 +28,7 @@ return {
         },
       },
     },
-  -- this github repo contains all the lsp configuration files maintained by community
-  "neovim/nvim-lspconfig"
+    -- this github repo contains all the lsp configuration files maintained by community
+    "neovim/nvim-lspconfig"
   }
 }
