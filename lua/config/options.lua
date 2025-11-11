@@ -1,45 +1,77 @@
 -- Leader Key
 vim.g.mapleader = " "
 
-local opt = vim.opt
+-- Show Numbers
+vim.o.relativenumber = true
+vim.o.number = true
 
-opt.relativenumber = true
-opt.number = true
-
--- tabs & indentation
-opt.tabstop = 2       -- 2 spaces for tabs (prettier default)
-opt.shiftwidth = 2    -- 2 spaces for indent width
-opt.expandtab = true  -- expand tab to spaces
-opt.autoindent = true -- copy indent from current line when starting new one
+-- Indentation
+vim.o.tabstop = 2
+vim.o.shiftwidth = 2
+vim.o.expandtab = true
+vim.o.autoindent = true
 
 -- WordWrap
-opt.wrap = true
+vim.o.wrap = true
 
--- search settings
-opt.ignorecase = true -- ignore case when searching
-opt.smartcase = true  -- if you include mixed case in your search, assumes you want case-sensitive
+-- Search
+vim.o.ignorecase = true
+vim.o.smartcase = true
 
-opt.cursorline = true
+vim.o.cursorline = true
 
--- turn on termguicolors for tokyonight colorscheme to work
--- (have to use iterm2 or any other true color terminal)
-opt.termguicolors = true
-opt.background = "dark" -- colorschemes that can be light or dark will be made dark
-opt.signcolumn = "yes"  -- show sign column so that text doesn't shift
+vim.o.termguicolors = true
+vim.o.background = "dark"
+vim.o.signcolumn = "yes" -- Fixed Sign Column, helps in maintaining indentation during warning or errors symbols
 
--- backspace
-opt.backspace = "indent,eol,start" -- allow backspace on indent, end of line or insert mode start position
+vim.o.backspace = "indent,eol,start"
 
--- clipboard
--- opt.clipboard:append("unnamedplus") -- use system clipboard as default register
+vim.o.splitright = true
+vim.o.splitbelow = true
 
--- split windows
-opt.splitright = true -- split vertical window to the right
-opt.splitbelow = true -- split horizontal window to the bottom
-
-
--- live reload file changes outside neovim
 vim.o.autoread = true
 vim.api.nvim_create_autocmd({ "FocusGained", "BufEnter", "CursorHold" }, {
-  command = "checktime"
+	command = "checktime",
 })
+
+-- Keybinds
+
+vim.keymap.set({ "n", "x" }, "<Leader>y", '"+y', { silent = true }) -- Copy to system clipboard in normal/visual mode
+vim.keymap.set({ "n", "x" }, "<Leader>p", '"+p', { silent = true }) -- Paste from system clipboard in normal/visual mode
+-- Move lines up, down in normal & visual mode
+vim.keymap.set("n", "<C-A-k>", ":m .-2<CR>==", { silent = true })
+vim.keymap.set("n", "<C-A-j>", ":m .+1<CR>==", { silent = true })
+vim.keymap.set("x", "<C-A-k>", ":m '<-2<CR>gv=gv", { silent = true })
+vim.keymap.set("x", "<C-A-j>", ":m '>+1<CR>gv=gv", { silent = true })
+
+-- Function to copy diagnostic message to clipboard
+local function copy_diagnostic_to_clipboard()
+	-- Get the current diagnostic at the cursor position
+	local diagnostics = vim.diagnostic.get(0, { lnum = vim.fn.line(".") - 1 })
+	if #diagnostics > 0 then
+		-- Create an empty table to store all the diagnostic messages
+		local messages = {}
+
+		-- Loop through all diagnostics and collect the messages
+		for _, diagnostic in ipairs(diagnostics) do
+			table.insert(messages, diagnostic.message)
+		end
+
+		-- Join all messages into a single string with a newline separator
+		local msg = table.concat(messages, "\n")
+
+		-- Copy it to the clipboard using the '+' register
+		vim.fn.setreg("+", msg)
+
+		-- Provide feedback to the user
+		print("Diagnostic messages copied to clipboard!")
+	else
+		print("No diagnostic messages found under the cursor.")
+	end
+end
+
+-- Create a custom command to copy the diagnostic message
+vim.api.nvim_create_user_command("CopyDiagnostic", copy_diagnostic_to_clipboard, {})
+
+-- Map a key to trigger the CopyDiagnostic command
+vim.api.nvim_set_keymap("n", "<leader>cd", ":CopyDiagnostic<CR>", { noremap = true, silent = true })
